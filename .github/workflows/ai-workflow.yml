@@ -65,12 +65,18 @@ jobs:
           aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} --query taskDefinition > task-definition.json
           echo "file=task-definition.json" >> $GITHUB_OUTPUT
 
+      - name: Clean task definition for old SDK
+        id: clean-task-def
+        run: |
+          # jq를 사용해 다운로드한 파일에서 enableFaultInjection 키를 삭제합니다.
+          jq 'del(.enableFaultInjection)' ${{ steps.download-task-def.outputs.file }} > cleaned-task-def.json
+          echo "file=cleaned-task-def.json" >> $GITHUB_OUTPUT
 
       - name: Render Amazon ECS task definition
         id: render-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ steps.download-task-def.outputs.file }}
+          task-definition: ${{ steps.clean-task-def.outputs.file }}
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.build-image.outputs.image }}
 
