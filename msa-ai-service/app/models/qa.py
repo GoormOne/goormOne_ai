@@ -1,0 +1,1 @@
+# Pydantic 스키마 (qa_queries, qa_answers)
