@@ -11,11 +11,11 @@ on:
 # 워크플로우 전체에서 사용할 환경 변수
 env:
   AWS_REGION: ap-northeast-2
-  SERVICE_DIR: msa-ai-service                   # 서비스의 디렉토리 이름
-  ECR_REPOSITORY: ai-service                    # ECR 리포지토리 및 ECS 서비스 이름
-  ECS_CLUSTER_NAME: DevCluster                  # ECS 클러스터 이름
-  ECS_TASK_DEFINITION_FAMILY: ai-service-td     # ECS 태스크 정의 패밀리 이름
-  CONTAINER_NAME: msa-ai-service                # Task Definition 안의 컨테이너 이름
+  SERVICE_DIR: msa-ai-service
+  ECR_REPOSITORY: ai-service
+  ECS_CLUSTER_NAME: DevCluster
+  ECS_TASK_DEFINITION_FAMILY: ai-service-td
+  CONTAINER_NAME: msa-ai-service
 
 # GitHub Actions Runner에 부여할 권한 (AWS OIDC 인증용)
 permissions:
