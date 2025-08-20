@@ -5,8 +5,7 @@ name: CI/CD for AI Service
 on:
   push:
     branches: [ "release/1.0.0" ]
-    paths:
-      - 'msa-ai-service/**'
+
 
 
 env:
