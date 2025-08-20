@@ -1,0 +1,85 @@
+
+name: CI/CD for AI Service
+
+
+on:
+  push:
+    branches: [ "release/1.0.0" ]
+    paths:
+      - 'msa-ai-service/**'
+
+# 워크플로우 전체에서 사용할 환경 변수
+env:
+  AWS_REGION: ap-northeast-2
+  SERVICE_DIR: msa-ai-service                   # 서비스의 디렉토리 이름
+  ECR_REPOSITORY: ai-service                    # ECR 리포지토리 및 ECS 서비스 이름
+  ECS_CLUSTER_NAME: DevCluster                  # ECS 클러스터 이름
+  ECS_TASK_DEFINITION_FAMILY: ai-service-td     # ECS 태스크 정의 패밀리 이름
+  CONTAINER_NAME: msa-ai-service                # Task Definition 안의 컨테이너 이름
+
+# GitHub Actions Runner에 부여할 권한 (AWS OIDC 인증용)
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. AWS 자격 증명 설정 (OIDC 역할 사용)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::490913547024:role/gitactionToECR # 기존에 사용하던 역할 ARN
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 3. Amazon ECR 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. 이미지 태그로 사용할 짧은 Git 커밋 해시 생성
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # 5. Docker 이미지 빌드 및 ECR에 푸시
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./${{ env.SERVICE_DIR }}/Dockerfile ./${{ env.SERVICE_DIR }}
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # 6. 최신 ECS 태스크 정의 파일 다운로드
+
+      - name: Download task definition
+        id: download-task-def
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} --query taskDefinition > task-definition.json
+          echo "file=task-definition.json" >> $GITHUB_OUTPUT
+
+
+      - name: Render Amazon ECS task definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.download-task-def.outputs.file }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      # 8. 새로운 태스크 정의를 ECS 서비스에 배포
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ env.ECR_REPOSITORY }}
+          cluster: ${{ env.ECS_CLUSTER_NAME }}
+          wait-for-service-stability: true
