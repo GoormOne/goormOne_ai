@@ -1,4 +1,4 @@
-# 테스트용 파이프라인 재현 라우터
+# 로컬 테스트용 파이프라인 재현 라우터
 
 # app/routes/seed_router.py
 from fastapi import APIRouter
