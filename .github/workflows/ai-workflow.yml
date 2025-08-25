@@ -6,6 +6,8 @@ on:
 
 
 
+
+
 env:
   AWS_REGION: ap-northeast-2
   SERVICE_DIR: msa-ai-service
@@ -13,6 +15,7 @@ env:
   ECS_CLUSTER_NAME: DevCluster
   ECS_TASK_DEFINITION_FAMILY: ai-service-td
   CONTAINER_NAME: msa-ai-service
+
 
 
 permissions:
@@ -63,17 +66,20 @@ jobs:
           aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} --query taskDefinition > task-definition.json
           echo "file=task-definition.json" >> $GITHUB_OUTPUT
 
+
       - name: Clean task definition for old SDK
         id: clean-task-def
         run: |
           jq 'del(.enableFaultInjection)' ${{ steps.download-task-def.outputs.file }} > cleaned-task-def.json
           echo "file=cleaned-task-def.json" >> $GITHUB_OUTPUT
 
+
       - name: Render Amazon ECS task definition
         id: render-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ steps.clean-task-def.outputs.file }}
+
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.build-image.outputs.image }}
 
@@ -85,3 +91,4 @@ jobs:
           service: ${{ env.ECR_REPOSITORY }}
           cluster: ${{ env.ECS_CLUSTER_NAME }}
           wait-for-service-stability: true
+

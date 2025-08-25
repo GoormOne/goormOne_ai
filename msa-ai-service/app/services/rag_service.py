@@ -1,4 +1,6 @@
-# RAG 로직 (질문→검색→답변)
+# RAG 로직 (질문 -> 검색 ->답변)
+# 질문 콜렉션 조회 -> 메뉴 리뷰 가져옴 -> 리뷰 임베딩 저장 -> 질문 답변 생성 및 콜렉션에 저장
+# 실제 운영에서 쓰임
 
 # app/services/rag_service.py
 from datetime import datetime
