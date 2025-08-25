@@ -28,7 +28,7 @@ def seed_data():
         "created_at": now,
         "updated_at": now
     }
-    get_collection("reviews_denorm").insert_one(review)
+    get_collection("old_reviews_denorm").insert_one(review)
 
     # 2) 질문 (사용자 질문 임의 입력)
     request_id = gen_uuid()
@@ -39,7 +39,7 @@ def seed_data():
         "question_raw": "겉바속촉인가요?",
         "created_at": now
     }
-    get_collection("qa_queries").insert_one(query)
+    get_collection("old_qa_queries").insert_one(query)
 
     # 3) 리뷰 임베딩 (실제 OpenAI 호출)
     review_embedding = {
