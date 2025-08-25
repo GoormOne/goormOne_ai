@@ -15,7 +15,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 async def run_rag(request_id: str):
     """질문 → 임베딩 검색 → 답변 생성 → MongoDB 저장"""
 
-    query_col = get_collection("qa_queries")
+    query_col = get_collection("old_qa_queries")
     query = query_col.find_one({"request_id": request_id})
     if not query:
         return {"error": "query not found"}
@@ -27,7 +27,7 @@ async def run_rag(request_id: str):
     q_emb = get_embedding(question_text)
 
     # 2) 리뷰 가져오기 (메뉴 기준 최신 1건)
-    review_col = get_collection("reviews_denorm")
+    review_col = get_collection("old_reviews_denorm")
     review = review_col.find_one({"menu_id": menu_id}, sort=[("updated_at", -1)])
     if not review:
         return {"error": "no reviews found"}
