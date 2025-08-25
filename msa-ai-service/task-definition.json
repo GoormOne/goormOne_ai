@@ -22,21 +22,46 @@
           "value": "dev"
         }
       ],
-      "environmentFiles": [],
       "mountPoints": [],
       "volumesFrom": [],
-      "ulimits": [],
+      "logConfiguration": {
+        "logDriver": "awsfirelens",
+        "options": {
+          "Host": "loki-service.msa-service",
+          "Labels": "job=ai-service, cluster=DevCluster, service=ai-service",
+          "Name": "loki",
+          "Port": "3100"
+        }
+      },
+      "systemControls": []
+    },
+    {
+      "name": "log_router",
+      "image": "public.ecr.aws/aws-observability/aws-for-fluent-bit:stable",
+      "cpu": 0,
+      "memoryReservation": 51,
+      "portMappings": [],
+      "essential": false,
+      "environment": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "user": "0",
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/ai-service-td",
+          "awslogs-group": "/ecs/firelens-log-router",
           "awslogs-create-group": "true",
           "awslogs-region": "ap-northeast-2",
           "awslogs-stream-prefix": "ecs"
-        },
-        "secretOptions": []
+        }
       },
-      "systemControls": []
+      "systemControls": [],
+      "firelensConfiguration": {
+        "type": "fluentbit",
+        "options": {
+          "enable-ecs-log-metadata": "true"
+        }
+      }
     }
   ],
   "family": "ai-service-td",
