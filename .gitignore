@@ -47,4 +47,5 @@ __pycache__/
 .venv/
 
 ### Environment ###
-.env
+.env.prod
+.env.dev

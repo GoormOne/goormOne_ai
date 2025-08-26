@@ -1,82 +1,152 @@
-# 로컬 테스트용 파이프라인 재현 라우터
-
 # app/routes/seed_router.py
+# 로컬 테스트용 -> 스프링 API 역할 대신 질문/리뷰 더미 데이터 넣어주는 라우터
+
 from fastapi import APIRouter
-from datetime import datetime, timezone
 from app.db.mongodb import get_collection
-from app.utils.helpers import gen_uuid
-from app.services.embedding_service import get_embedding
-from openai import OpenAI
-import os
+from datetime import datetime
+import uuid
 
 router = APIRouter()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-@router.post("/seed")
-def seed_data():
-    now = datetime.now(timezone.utc)
+qa_queries_col = get_collection("qa_queries")
+reviews_denorm_col = get_collection("reviews_denorm")
 
-    # 1) 리뷰 (Spring 대신 임시로 직접 삽입)
-    review_id = gen_uuid()
-    menu_id = gen_uuid()
-    review = {
-        "_id": review_id,
-        "menu_id": menu_id,
-        "menu_name": "꿔바로우",
-        "store_name": "신나라 마라탕",
-        "text": "겉바속촉이라 바삭합니다.",
-        "created_at": now,
-        "updated_at": now
-    }
-    get_collection("reviews_denorm").insert_one(review)
+# 고정 UUID 생성 (매번 실행해도 동일한 ID 유지)
+STORE_IDS = {
+    "고봉밥상": str(uuid.uuid5(uuid.NAMESPACE_DNS, "고봉밥상")),
+    "엽기떡볶이": str(uuid.uuid5(uuid.NAMESPACE_DNS, "엽기떡볶이")),
+    "네모디저트": str(uuid.uuid5(uuid.NAMESPACE_DNS, "네모디저트")),
+}
+MENU_IDS = {
+    "된장찌개": str(uuid.uuid5(uuid.NAMESPACE_DNS, "된장찌개")),
+    "떡볶이": str(uuid.uuid5(uuid.NAMESPACE_DNS, "떡볶이")),
+    "치즈케이크": str(uuid.uuid5(uuid.NAMESPACE_DNS, "치즈케이크")),
+}
 
-    # 2) 질문 (사용자 질문 임의 입력)
-    request_id = gen_uuid()
-    query = {
-        "_id": gen_uuid(),
-        "request_id": request_id,
-        "menu_id": menu_id,
-        "question_raw": "겉바속촉인가요?",
-        "created_at": now
-    }
-    get_collection("qa_queries").insert_one(query)
+# 매장/메뉴/질문/리뷰 정의
+stores = [
+    {
+        "store_name": "고봉밥상",
+        "menu_name": "된장찌개",
+        "questions": ["짜지 않나요?", "국물 맛이 깊나요?", "양이 충분한가요?"],
+        "reviews": [
+            "국물이 너무 짜요.",
+            "간이 세서 목이 메여요.",
+            "싱거워서 맛이 없어요.",
+            "양이 부족해요.",
+            "국물 맛이 텁텁해요.",
+            "짠맛이 강하지만 깊은 맛은 있어요.",
+            "국물이 깔끔해서 좋습니다.",
+            "된장이 진해서 좋아요.",
+            "양이 많아 든든합니다.",
+            "국물이 따뜻하고 구수해요.",
+        ],
+    },
+    {
+        "store_name": "엽기떡볶이",
+        "menu_name": "떡볶이",
+        "questions": ["맵나요?", "양이 많나요?", "맛이 자극적이지는 않나요?"],
+        "reviews": [
+            "매콤하고 맛있어요.",
+            "양이 많아서 만족스러워요.",
+            "매운맛이 강렬하고 중독적이에요.",
+            "양념이 진하고 달콤해요.",
+            "치즈랑 어울려서 좋아요.",
+            "너무 매워서 먹기 힘들어요.",
+            "양이 적어서 아쉬워요.",
+            "국물이 너무 짜요.",
+            "개매움.",
+            "조금 달아서 느끼해요.",
+        ],
+    },
+    {
+        "store_name": "네모디저트",
+        "menu_name": "치즈케이크",
+        "questions": ["크기가 크나요?", "달콤한가요?", "느끼하지는 않나요?"],
+        "reviews": [
+            "조각이 커서 배부릅니다.",
+            "달콤하고 부드러워요.",
+            "치즈 맛이 진하고 깊어요.",
+            "크리미해서 입안에서 녹아요.",
+            "양이 넉넉해서 좋아요.",
+            "너무 달아서 목이 멕혀요.",
+            "조각이 작아서 아쉬워요.",
+            "치즈 맛이 안남.",
+            "양이 부족합니다.",
+            "맛이 조금 밋밋해요.",
+        ],
+    },
+]
 
-    # 3) 리뷰 임베딩 (실제 OpenAI 호출)
-    review_embedding = {
-        "_id": gen_uuid(),
-        "review_id": review_id,
-        "menu_id": menu_id,
-        "text": review["text"],
-        "embedding": get_embedding(review["text"]),  # OpenAI embedding
-        "created_at": now,
-        "updated_at": now
-    }
-    get_collection("reviews_embedding").insert_one(review_embedding)
 
-    # 4) 답변 (실제 OpenAI 호출)
-    resp = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "너는 리뷰 내용을 요약해서 질문에 답하는 도우미야."},
-            {"role": "user", "content": f"리뷰: {review['text']}\n질문: {query['question_raw']}"}
+@router.post("/init")
+async def init_dummy_data():
+    results = []
+
+    for store in stores:
+        store_id = STORE_IDS[store["store_name"]]
+        menu_id = MENU_IDS[store["menu_name"]]
+
+        # 질문 준비
+        questions = [
+            {"request_id": str(uuid.uuid4()), "question": q}
+            for q in store["questions"]
         ]
-    )
-    answer_text = resp.choices[0].message.content
 
-    answer = {
-        "_id": gen_uuid(),
-        "key_hash": gen_uuid(),
-        "menu_id": menu_id,
-        "norm_question": "CRISPY",
-        "answer_text": answer_text,
-        "evidence": [{"review_id": review_id, "snippet": review["text"]}],
-        "generated_at": now
-    }
-    get_collection("qa_answers").insert_one(answer)
+        # qa_queries 전체 교체 (replace_one)
+        qa_queries_col.replace_one(
+            {"_id": store_id},
+            {
+                "_id": store_id,
+                "store_name": store["store_name"],
+                "menus": [
+                    {
+                        "menu_id": menu_id,
+                        "menu_name": store["menu_name"],
+                        "questions": questions,
+                    }
+                ],
+                "updated_at": datetime.utcnow(),
+            },
+            upsert=True,
+        )
 
-    return {
-        "message": "seed data inserted",
-        "review_id": review_id,
-        "request_id": request_id,
-        "answer": answer_text
-    }
+        # 리뷰 준비
+        reviews = [
+            {
+                "review_id": str(uuid.uuid4()),
+                "text": r,
+                "created_at": datetime.utcnow(),
+            }
+            for r in store["reviews"]
+        ]
+
+        # reviews_denorm 전체 교체 (replace_one)
+        reviews_denorm_col.replace_one(
+            {"_id": store_id},
+            {
+                "_id": store_id,
+                "store_name": store["store_name"],
+                "menus": [
+                    {
+                        "menu_id": menu_id,
+                        "menu_name": store["menu_name"],
+                        "reviews": reviews,
+                    }
+                ],
+                "updated_at": datetime.utcnow(),
+            },
+            upsert=True,
+        )
+
+        results.append(
+            {
+                "store_id": store_id,
+                "store_name": store["store_name"],
+                "menu": store["menu_name"],
+                "question_count": len(questions),
+                "review_count": len(reviews),
+            }
+        )
+
+    return {"msg": "Dummy data inserted", "stores": results}
