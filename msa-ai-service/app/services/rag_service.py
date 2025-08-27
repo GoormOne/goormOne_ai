@@ -61,6 +61,8 @@ def process_query(store_doc, menu, query_emb):
     """
     Change Stream에서 새로운 질문 들어왔을 때 실행되는 자동 응답 생성기
     """
+    print("📌 process_query 진입:", store_doc["_id"], menu["menu_id"], query_emb["label"])
+
     reviews_doc = reviews_embedding_col.find_one({"_id": store_doc["_id"]})
     if not reviews_doc:
         return None
@@ -71,6 +73,7 @@ def process_query(store_doc, menu, query_emb):
 
     # 라벨 맞는 리뷰만 (긍/부정 포함)
     candidate_reviews = [r for r in target_menu["reviews_embedding"] if r["label"] == query_emb["label"]]
+    print("후보 리뷰 개수:", len(candidate_reviews))
     if not candidate_reviews:
         return None
 
@@ -87,7 +90,7 @@ def process_query(store_doc, menu, query_emb):
         query_emb["label"],
         selected_reviews
     )
-
+    print("qa_answers 저장 시도:", query_emb["request_id"]) 
     # qa_answers 저장
     qa_answers_col.update_one(
         {"_id": query_emb["request_id"]},
