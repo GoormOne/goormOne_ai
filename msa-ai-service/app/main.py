@@ -2,10 +2,20 @@
 
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.routes import health, qa_router, seed_router
+from app.routes import health, qa_router
 from app.services.change_stream_service import start_watchers
 from app.core.config import ENV
 if ENV == "dev": from app.routes import seed_router
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-5s %(name)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    stream=sys.stdout,
+)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager

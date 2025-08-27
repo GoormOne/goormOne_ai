@@ -5,10 +5,11 @@ name: CI/CD for AI Service
 on:
   push:
     branches: [ "release/1.0.0" ]
-    paths:
-      - 'msa-ai-service/**'
 
-# 워크플로우 전체에서 사용할 환경 변수
+
+
+
+
 env:
   AWS_REGION: ap-northeast-2
   SERVICE_DIR: msa-ai-service
@@ -17,7 +18,8 @@ env:
   ECS_TASK_DEFINITION_FAMILY: ai-service-td
   CONTAINER_NAME: msa-ai-service
 
-# GitHub Actions Runner에 부여할 권한 (AWS OIDC 인증용)
+
+# GitHub Actions Runner에 부여할 권한
 permissions:
   id-token: write
   contents: read
@@ -67,11 +69,20 @@ jobs:
           echo "file=task-definition.json" >> $GITHUB_OUTPUT
 
 
+      - name: Clean task definition for old SDK
+        id: clean-task-def
+        run: |
+          # jq를 사용해 다운로드한 파일에서 enableFaultInjection 키를 삭제합니다.
+          jq 'del(.enableFaultInjection)' ${{ steps.download-task-def.outputs.file }} > cleaned-task-def.json
+          echo "file=cleaned-task-def.json" >> $GITHUB_OUTPUT
+
+
       - name: Render Amazon ECS task definition
         id: render-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ${{ steps.download-task-def.outputs.file }}
+          task-definition: ${{ steps.clean-task-def.outputs.file }}
+
           container-name: ${{ env.CONTAINER_NAME }}
           image: ${{ steps.build-image.outputs.image }}
 
@@ -83,3 +94,4 @@ jobs:
           service: ${{ env.ECR_REPOSITORY }}
           cluster: ${{ env.ECS_CLUSTER_NAME }}
           wait-for-service-stability: true
+
