@@ -261,7 +261,6 @@ def watch_reviews():
                 process_new_reviews(change)
 
 def start_watchers():
-    # ✅ 서버 시작 시 bootstrap 먼저 실행
     bootstrap_unanswered_questions()
     bootstrap_reviews_embedding()
 
