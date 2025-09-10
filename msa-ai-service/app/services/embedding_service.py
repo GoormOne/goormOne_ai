@@ -32,7 +32,7 @@ def embed_and_label_question(question: str):
     질문: {question}
     """
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-41-mini",
         messages=[{"role": "user", "content": prompt}],
         response_format={"type": "json_object"}
     )
@@ -62,7 +62,7 @@ def embed_and_label_review(text: str):
     리뷰: {text}
     """
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-41-mini",
         messages=[{"role": "user", "content": prompt}],
         response_format={"type": "json_object"}
     )

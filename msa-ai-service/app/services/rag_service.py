@@ -41,9 +41,9 @@ def generate_answer(store_name, menu_name, question, label, reviews):
 1. 반드시 위 리뷰만 사실 근거로 삼아 답변하세요.
 2. {label} 속성에 해당하는 리뷰들 중, 긍정/부정 리뷰 개수를 세어라.
 3. 다음 형식으로 요약하라:
-   - "'{label}' 관련 리뷰 {len(reviews)}건 중 X건은 긍정적이고, Y건은 부정적입니다."
+   - {label} 관련 리뷰 {len(reviews)}건 중 X건은 긍정적이고, Y건은 부정적입니다."
    - 마지막에 결론을 붙여라. (예: "대체로 짜다고 합니다", "의견이 갈립니다", "비율이 비슷합니다", "너무 짜다고 합니다")
-4. 긍정/부정이라는 단어는 쓰지 말고, '{label}' 속성에 맞는 자연스러운 한국어 서술형으로 풀어라.
+4. 긍정/부정이라는 단어는 쓰지 말고, {label} 속성에 맞는 자연스러운 한국어 서술형으로 풀어라.
    - 예: salty → "짜다" / "짜지 않다"
    - 예: quantity → "양이 많다" / "양이 적다"
    - 예: spicy → "맵다" / "안맵다"
@@ -51,7 +51,7 @@ def generate_answer(store_name, menu_name, question, label, reviews):
 """
 
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-41-mini",
         messages=[{"role": "user", "content": prompt}]
     )
     return resp.choices[0].message.content.strip()

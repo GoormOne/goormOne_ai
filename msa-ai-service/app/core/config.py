@@ -14,5 +14,5 @@ MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_NAME = os.getenv("MONGODB_NAME", "ai_service_db")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") 
 
-REVIEW_LABELS = ["quantity", "size", "sweet", "salty", "spicy", "deep"]
+REVIEW_LABELS = ["quantity", "size", "sweet", "salty", "spicy", "deep", "sour"]
 POLARITY_LABELS = ["POSITIVE", "NEGATIVE"]
