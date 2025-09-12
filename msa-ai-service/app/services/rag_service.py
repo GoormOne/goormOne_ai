@@ -3,7 +3,7 @@
 질문 임베딩과 리뷰 임베딩 비교
 label + polarity 필터링
 Top-K 리뷰 선택
-답변 텍스트 생성 및 qa_answers 저장
+답변 텍스트 생성 및 answers 저장
 """
 
 from datetime import datetime
@@ -18,7 +18,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # Mongo 컬렉션
 queries_embedding_col = get_collection("queries_embedding")
 reviews_embedding_col = get_collection("reviews_embedding")
-qa_answers_col = get_collection("qa_answers")
+answers_col = get_collection("answers")
 
 # 코사인 유사도
 def cosine_similarity(a, b):
@@ -90,9 +90,9 @@ def process_query(store_doc, menu, query_emb):
         query_emb["label"],
         selected_reviews
     )
-    print("qa_answers 저장 시도:", query_emb["request_id"]) 
-    # qa_answers 저장
-    qa_answers_col.update_one(
+    print("answers 저장 시도:", query_emb["request_id"]) 
+    # answers 저장
+    answers_col.update_one(
         {"_id": query_emb["request_id"]},
         {"$set": {
             "store_id": store_doc["_id"],
@@ -138,7 +138,7 @@ def generate_answer_from_reviews(store_id: str, menu_id: str, question: str):
         selected_reviews
     )
 
-    qa_answers_col.update_one(
+    answers_col.update_one(
         {"_id": question},
         {"$set": {
             "store_id": store_id,

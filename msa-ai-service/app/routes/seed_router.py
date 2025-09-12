@@ -8,8 +8,8 @@ import uuid
 
 router = APIRouter()
 
-qa_queries_col = get_collection("qa_queries")
-reviews_denorm_col = get_collection("reviews_denorm")
+queries_col = get_collection("queries")
+reviews_col = get_collection("reviews")
 
 # 고정 UUID 생성 (매번 실행해도 동일한 ID 유지)
 STORE_IDS = {
@@ -93,8 +93,8 @@ async def init_dummy_data():
             for q in store["questions"]
         ]
 
-        # qa_queries 전체 교체 (replace_one)
-        qa_queries_col.replace_one(
+        # queries 전체 교체 (replace_one)
+        queries_col.replace_one(
             {"_id": store_id},
             {
                 "_id": store_id,
@@ -121,8 +121,8 @@ async def init_dummy_data():
             for r in store["reviews"]
         ]
 
-        # reviews_denorm 전체 교체 (replace_one)
-        reviews_denorm_col.replace_one(
+        # reviews 전체 교체 (replace_one)
+        reviews_col.replace_one(
             {"_id": store_id},
             {
                 "_id": store_id,

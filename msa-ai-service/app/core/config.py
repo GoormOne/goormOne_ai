@@ -11,7 +11,7 @@ else:
 
 
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_NAME = os.getenv("MONGODB_NAME", "ai_service_db")
+MONGODB_NAME = os.getenv("MONGODB_NAME", "ai_service_dev")
 
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))

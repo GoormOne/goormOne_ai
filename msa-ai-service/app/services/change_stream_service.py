@@ -1,8 +1,8 @@
 # MongoDB 이벤트 감시 후 자동 처리 트리거
 """
 MongoDB Change Stream 이벤트 감시 서비스
-- qa_queries 변경 시: 새로운 질문 → queries_embedding 업데이트 + process_query 호출
-- reviews_denorm 변경 시: 새로운 리뷰 → reviews_embedding 업데이트
+- queries 변경 시: 새로운 질문 → queries_embedding 업데이트 + process_query 호출
+- reviews 변경 시: 새로운 리뷰 → reviews_embedding 업데이트
 """
 # app/services/change_stream_service.py
 import threading
@@ -11,8 +11,8 @@ from app.db.mongodb import get_collection
 from app.services.embedding_service import embed_and_label_question, embed_and_label_review
 from app.services.rag_service import process_query
 
-qa_queries_col = get_collection("qa_queries")
-reviews_denorm_col = get_collection("reviews_denorm")
+queries_col = get_collection("queries")
+reviews_col = get_collection("reviews")
 queries_embedding_col = get_collection("queries_embedding")
 reviews_embedding_col = get_collection("reviews_embedding")
 
@@ -73,7 +73,7 @@ def process_new_questions(change):
                 }
             )
 
-            # RAG 실행 (qa_answers 생성까지)
+            # RAG 실행 (answers 생성까지)
             query_emb = {
                 "request_id": q["request_id"],
                 "question": q["question"],
@@ -144,7 +144,7 @@ def process_new_reviews(change):
 # ✅ 추가: 서버 시작 시 bootstrap 함수들
 def bootstrap_unanswered_questions():
     print("🚀 Bootstrap unanswered questions 실행")
-    for full_doc in qa_queries_col.find({}):
+    for full_doc in queries_col.find({}):
         for menu in full_doc.get("menus", []):
             for q in menu.get("questions", []):
                 queries_doc = queries_embedding_col.find_one({"_id": full_doc["_id"]})
@@ -184,7 +184,7 @@ def bootstrap_unanswered_questions():
 
 def bootstrap_reviews_embedding():
     print("🚀 Bootstrap reviews embedding 실행")
-    for full_doc in reviews_denorm_col.find({}):
+    for full_doc in reviews_col.find({}):
         for menu in full_doc.get("menus", []):
             for r in menu.get("reviews", []):
                 reviews_doc = reviews_embedding_col.find_one({"_id": full_doc["_id"]})
@@ -249,13 +249,13 @@ def bootstrap_reviews_embedding():
 
 # Change Stream 워처
 def watch_queries():
-    with qa_queries_col.watch(full_document="updateLookup") as stream:
+    with queries_col.watch(full_document="updateLookup") as stream:
         for change in stream:
             if change["operationType"] in ("insert", "replace", "update"):
                 process_new_questions(change)
 
 def watch_reviews():
-    with reviews_denorm_col.watch(full_document="updateLookup") as stream:
+    with reviews_col.watch(full_document="updateLookup") as stream:
         for change in stream:
             if change["operationType"] in ("insert", "replace", "update"):
                 process_new_reviews(change)

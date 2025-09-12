@@ -2,14 +2,14 @@
 # API 트리거 질문 -> 응답 처리 가능
 
 """
-1. (Change Stream 또는 직접 호출 시) qa_queries 문서 전체 읽기
+1. (Change Stream 또는 직접 호출 시) queries 문서 전체 읽기
 2. 각 질문(request_id) 확인:
     queries_embedding에 없으면 → 새 질문 처리 시작
 3. queries_embedding 생성 (label, polarity 포함)
-4. qa_answers에 같은 store_id + menu_id + label + polarity 답변이 있으면:
-    qa_answers.created_at < reviews_denorm.updated_at → 새로 생성
+4. answers에 같은 store_id + menu_id + label + polarity 답변이 있으면:
+    answers.created_at < reviews.updated_at → 새로 생성
     아니면 재사용
-5. 최종 답변 qa_answers에 저장
+5. 최종 답변 answers에 저장
 """
 
 from fastapi import APIRouter
@@ -20,7 +20,7 @@ from app.services.rag_service import generate_answer_from_reviews
 
 router = APIRouter()
 
-qa_queries_col = get_collection("qa_queries")
+queries_col = get_collection("queries")
 queries_embedding_col = get_collection("queries_embedding")
 
 @router.get("/process-queries")
@@ -29,7 +29,7 @@ async def process_queries(limit: int = 10):
     수동으로 QA 파이프라인 실행 (Change Stream 대신 직접 확인할 때 사용)
     """
     results = []
-    docs = qa_queries_col.find().limit(limit)
+    docs = queries_col.find().limit(limit)
 
     for doc in docs:
         store_id = doc["_id"]

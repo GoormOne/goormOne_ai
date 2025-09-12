@@ -18,8 +18,8 @@ from app.ml.embedding_model import embedding_model
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # # MongoDB 컬렉션 핸들
-# qa_queries_col = get_collection("qa_queries")
-# reviews_denorm_col = get_collection("reviews_denorm")
+# queries_col = get_collection("queries")
+# reviews_col = get_collection("reviews")
 # queries_embedding_col = get_collection("queries_embedding")
 # reviews_embedding_col = get_collection("reviews_embedding")
 
