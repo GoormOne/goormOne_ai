@@ -1,13 +1,14 @@
-# (Spring + Mongo + Change Stream 자동 실행)
+# (Spring + Mongo + Redis Stream 자동 실행)
 
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.routes import health, qa_router
-from app.services.change_stream_service import start_watchers
 from app.core.config import ENV
 if ENV == "dev": from app.routes import seed_router
 import logging
 import sys
+from app.services.redis_service import start_redis_consumer
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Mongo Change Stream 시작
-    start_watchers()
+    
+    # Redis Consumer 시작
+    start_redis_consumer()
     yield
 
 app = FastAPI(title="MSA AI Service", lifespan=lifespan)

@@ -10,3 +10,4 @@ dnspython
 numpy
 sentence-transformers
 torch
+redis

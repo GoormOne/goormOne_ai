@@ -1,4 +1,6 @@
-# 질문/리뷰를 임베딩으로 변환
+# 질문/리뷰에서 임베딩 + 라벨링 추출
+# 임베딩: kosimCSE
+# 라벨링: OpenAI API
 
 """
 질문 / 리뷰 임베딩 + 라벨링 서비스
@@ -7,77 +9,104 @@
 - 결과를 MongoDB queries_embedding / reviews_embedding 에 반영
 """
 
-from datetime import datetime
 from openai import OpenAI
 import json
-from app.db.mongodb import get_collection
 from app.core.config import OPENAI_API_KEY, REVIEW_LABELS, POLARITY_LABELS
+from app.ml.embedding_model import embedding_model
 
 # OpenAI 클라이언트 초기화
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# MongoDB 컬렉션 핸들
-qa_queries_col = get_collection("qa_queries")
-reviews_denorm_col = get_collection("reviews_denorm")
-queries_embedding_col = get_collection("queries_embedding")
-reviews_embedding_col = get_collection("reviews_embedding")
+# # MongoDB 컬렉션 핸들
+# qa_queries_col = get_collection("qa_queries")
+# reviews_denorm_col = get_collection("reviews_denorm")
+# queries_embedding_col = get_collection("queries_embedding")
+# reviews_embedding_col = get_collection("reviews_embedding")
 
+
+def embed_and_label(text: str, mode: str):
+    """
+    텍스트(리뷰/질문)를 라벨링 + 임베딩으로 변환
+    mode: "review" 또는 "question"
+    """
+    target_word = "리뷰" if mode == "review" else "질문"
+    prompt = f"""
+    너는 리뷰 분석기야. {target_word} 문장을 보고 아래 후보 중 라벨과 polarity를 정해줘.
+    라벨 후보: {", ".join(REVIEW_LABELS)}
+    폴라리티 후보: {", ".join(POLARITY_LABELS)}
+    출력 형식: JSON {{ "label": "...", "polarity": "..." }}
+    {target_word}: {text}
+    """
+
+    # 라벨링
+    resp = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"}
+    )
+    parsed = json.loads(resp.choices[0].message.content)
+    label = parsed["label"]
+    polarity = parsed["polarity"]
+
+    # 임베딩
+    embedding = embedding_model.encode([text])[0]
+
+    return label, polarity, embedding
+
+
+
+
+##### 코드 리팩토링 전 #####
 # 질문 라벨링 + 임베딩
-def embed_and_label_question(question: str):
-    prompt = f"""
-    너는 리뷰 분석기야. 질문 문장을 보고 아래 후보 중 라벨과 polarity를 정해줘.
-    라벨 후보: {", ".join(REVIEW_LABELS)}
-    폴라리티 후보: {", ".join(POLARITY_LABELS)}
-    출력 형식: JSON {{ "label": "...", "polarity": "..." }}
-    질문: {question}
-    """
-    resp = client.chat.completions.create(
-        model="gpt-41-mini",
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"}
-    )
+# def embed_and_label_question(question: str):
+#     prompt = f"""
+#     너는 리뷰 분석기야. 질문 문장을 보고 아래 후보 중 라벨과 polarity를 정해줘.
+#     라벨 후보: {", ".join(REVIEW_LABELS)}
+#     폴라리티 후보: {", ".join(POLARITY_LABELS)}
+#     출력 형식: JSON {{ "label": "...", "polarity": "..." }}
+#     질문: {question}
+#     """
+#     resp = client.chat.completions.create(
+#         model="gpt-41-mini",
+#         messages=[{"role": "user", "content": prompt}],
+#         response_format={"type": "json_object"}
+#     )
 
-    # 최신 SDK에서는 .content 안에 JSON string 들어옴
-    parsed = json.loads(resp.choices[0].message.content)
-    label = parsed["label"]
-    polarity = parsed["polarity"]
+#     # 최신 SDK에서는 .content 안에 JSON string 들어옴
+#     parsed = json.loads(resp.choices[0].message.content)
+#     label = parsed["label"]
+#     polarity = parsed["polarity"]
 
-    # OpenAI Embedding API 호출
-    embed_resp = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=question
-    )
-    embedding = embed_resp.data[0].embedding
+#     # 임베딩 추출
+#     embedding = embedding_model.encode([question])[0]
 
-    return label, polarity, embedding
+#     return label, polarity, embedding
 
 
-# 리뷰 라벨링 + 임베딩
-def embed_and_label_review(text: str):
-    prompt = f"""
-    너는 리뷰 분석기야. 리뷰 문장을 보고 아래 후보 중 라벨과 polarity를 정해줘.
-    라벨 후보: {", ".join(REVIEW_LABELS)}
-    폴라리티 후보: {", ".join(POLARITY_LABELS)}
-    출력 형식: JSON {{ "label": "...", "polarity": "..." }}
-    리뷰: {text}
-    """
-    resp = client.chat.completions.create(
-        model="gpt-41-mini",
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"}
-    )
+# # 리뷰 라벨링 + 임베딩
+# def embed_and_label_review(text: str):
+#     # 라벨링
+#     prompt = f"""
+#     너는 리뷰 분석기야. 리뷰 문장을 보고 아래 후보 중 라벨과 polarity를 정해줘.
+#     라벨 후보: {", ".join(REVIEW_LABELS)}
+#     폴라리티 후보: {", ".join(POLARITY_LABELS)}
+#     출력 형식: JSON {{ "label": "...", "polarity": "..." }}
+#     리뷰: {text}
+#     """
+#     resp = client.chat.completions.create(
+#         model="gpt-41-mini",
+#         messages=[{"role": "user", "content": prompt}],
+#         response_format={"type": "json_object"}
+#     )
 
-    parsed = json.loads(resp.choices[0].message.content)
-    label = parsed["label"]
-    polarity = parsed["polarity"]
+#     parsed = json.loads(resp.choices[0].message.content)
+#     label = parsed["label"]
+#     polarity = parsed["polarity"]
+    
+#     # 임베딩 (로컬 모델)
+#     embedding = embedding_model.encode([text])[0]
 
-    embed_resp = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=text
-    )
-    embedding = embed_resp.data[0].embedding
-
-    return label, polarity, embedding
+#     return label, polarity, embedding
 
 
 # (옵션) 필요시: 임베딩 문서 업데이트 로직도 여기에 넣을 수 있음
