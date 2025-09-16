@@ -1,5 +1,8 @@
 FROM python:3.10-slim
 
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+    
 WORKDIR /app
 
 # SSL 인증서와 필요한 툴 설치
@@ -14,6 +17,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 #                SentenceTransformer('BM-K/KoSimCSE-roberta').save('./model')"
 
 
-COPY . .
+COPY app ./app
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

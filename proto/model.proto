@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package model;
+
+service ModelService {
+  rpc GetEmbedding (EmbeddingRequest) returns (EmbeddingResponse);
+}
+
+message EmbeddingRequest {
+  string text = 1;
+  map<string, string> meta = 2;
+}
+
+message EmbeddingResponse {
+  string status = 1;
+}

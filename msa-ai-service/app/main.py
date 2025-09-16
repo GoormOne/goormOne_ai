@@ -3,9 +3,12 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import logging
 import sys
+import asyncio
 from app.routes import health
 from app.core.config import ENV
 from app.services.redis_service import start_redis_consumer
+from app.services.review_watcher import watch_reviews
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,6 +23,10 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # Redis Consumer 시작
     start_redis_consumer()
+
+    # Mongo Change Stream Watcher 시작
+    asyncio.create_task(watch_reviews())
+
     yield
 
 
