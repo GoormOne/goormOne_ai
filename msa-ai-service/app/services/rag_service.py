@@ -56,6 +56,8 @@ def generate_answer(store_name, menu_name, question, label, reviews):
     )
     return resp.choices[0].message.content.strip()
 
+
+
 # Change Stream 자동 호출
 def process_query(store_doc, menu, query_emb):
     """

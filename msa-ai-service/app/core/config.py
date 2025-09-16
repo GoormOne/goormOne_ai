@@ -22,3 +22,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 REVIEW_LABELS = ["quantity", "size", "sweet", "salty", "spicy", "deep", "sour"]
 POLARITY_LABELS = ["POSITIVE", "NEGATIVE"]
+
+
+MODEL_SERVICE_URL = os.getenv("MODEL_SERVICE_URL", "http://localhost:8000/embed")

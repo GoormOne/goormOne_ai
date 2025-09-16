@@ -13,6 +13,7 @@ from openai import OpenAI
 import json
 from app.core.config import OPENAI_API_KEY, REVIEW_LABELS, POLARITY_LABELS
 from app.ml.embedding_model import embedding_model
+import requests
 
 # OpenAI 클라이언트 초기화
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -22,6 +23,15 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 # reviews_col = get_collection("reviews")
 # queries_embedding_col = get_collection("queries_embedding")
 # reviews_embedding_col = get_collection("reviews_embedding")
+
+MODEL_SERVICE_URL = "http://localhost:8000/embed"  
+# MODEL_SERVICE_URL = "http://model-service:8000/embed"  
+# 도커 compose 내부라면 service 이름으로 접근, 로컬 테스트라면 localhost
+
+def get_embedding(text: str):
+    response = requests.post(MODEL_SERVICE_URL, json={"text": text})
+    response.raise_for_status()
+    return response.json()["embedding"]
 
 
 def embed_and_label(text: str, mode: str):
@@ -49,7 +59,8 @@ def embed_and_label(text: str, mode: str):
     polarity = parsed["polarity"]
 
     # 임베딩
-    embedding = embedding_model.encode([text])[0]
+    embedding = get_embedding(text)
+    # embedding = embedding_model.encode([text])[0]
 
     return label, polarity, embedding
 
