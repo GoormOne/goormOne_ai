@@ -1,4 +1,4 @@
-# version: "3.9"
+version: "3.9"
 
 services:
   redis:
@@ -10,12 +10,14 @@ services:
     image: mongo:6
     ports:
       - "27017:27017"
-    command: ["--replSet", "rs0", "--bind_ip_all"]
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     volumes:
       - mongo_data:/data/db
 
   model-service:
-    build: ./model-service
+    build:
+      context: .
+      dockerfile: model-service/Dockerfile
     container_name: model-service
     ports:
       - "50051:50051"
@@ -25,12 +27,12 @@ services:
       - mongo
 
   msa-ai-service:
-    build: ./msa-ai-service
+    build:
+      context: .
+      dockerfile: msa-ai-service/Dockerfile
     container_name: msa-ai-service
     ports:
       - "8000:8000"
-    volumes:
-      - ./msa-ai-service/app:/app/app   # 코드 핫리로드용 (개발시)
     env_file:
       - .env.dev
     depends_on:
