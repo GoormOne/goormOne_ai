@@ -17,6 +17,7 @@ env:
 #  ECS_CLUSTER_NAME: DevCluster
 #  ECS_TASK_DEFINITION_FAMILY: ai-service-td
   CONTAINER_NAME: model-service
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 
 
