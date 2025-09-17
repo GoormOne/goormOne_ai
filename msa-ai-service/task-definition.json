@@ -17,10 +17,10 @@
       ],
       "essential": true,
       "environment": [
-        {
-          "name": "SPRING_PROFILES_ACTIVE",
-          "value": "dev"
-        }
+          { "name": "ENV", "value": "prod" },
+          { "name": "MONGODB_URI", "value": "mongodb+srv://ksm3255:!4786buch@team1mongodb.oh0o0np.mongodb.net/?retryWrites=true&w=majority&appName=Team1Mongodb" },
+          { "name": "MONGODB_NAME", "value": "ai_service_db" },
+          { "name": "OPENAI_API_KEY", "value": "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" }
       ],
       "mountPoints": [],
       "volumesFrom": [],
