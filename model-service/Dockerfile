@@ -27,3 +27,4 @@ ENV PYTHONPATH=/app
 
 # gRPC 서버 실행
 CMD ["python", "-m", "app.main"]
+  
