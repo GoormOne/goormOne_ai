@@ -1,0 +1,97 @@
+
+name: CI/CD for ai-model Service
+on:
+  push:
+    branches: [ "release/1.0.0" ]
+    paths:
+      - 'model-service/**'
+
+
+
+
+
+env:
+  AWS_REGION: ap-northeast-2
+  SERVICE_DIR: model-service
+  ECR_REPOSITORY: ai-model-service
+#  ECS_CLUSTER_NAME: DevCluster
+#  ECS_TASK_DEFINITION_FAMILY: ai-service-td
+  CONTAINER_NAME: model-service
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::490913547024:role/gitactionToECR # 기존에 사용하던 역할 ARN
+          aws-region: ${{ env.AWS_REGION }}
+
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+
+      - name: Set short git commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./${{ env.SERVICE_DIR }}/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      
+
+#      - name: Download task definition
+#        id: download-task-def
+#        run: |
+#          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION_FAMILY }} --query taskDefinition > task-definition.json
+#          echo "file=task-definition.json" >> $GITHUB_OUTPUT
+#
+#
+#      - name: Clean task definition for old SDK
+#        id: clean-task-def
+#        run: |
+#          jq 'del(.enableFaultInjection)' ${{ steps.download-task-def.outputs.file }} > cleaned-task-def.json
+#          echo "file=cleaned-task-def.json" >> $GITHUB_OUTPUT
+#
+#
+#      - name: Render Amazon ECS task definition
+#        id: render-task-def
+#        uses: aws-actions/amazon-ecs-render-task-definition@v1
+#        with:
+#          task-definition: ${{ steps.clean-task-def.outputs.file }}
+#
+#          container-name: ${{ env.CONTAINER_NAME }}
+#          image: ${{ steps.build-image.outputs.image }}
+#
+#
+#      - name: Deploy Amazon ECS task definition
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+#        with:
+#          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+#          service: ${{ env.ECR_REPOSITORY }}
+#          cluster: ${{ env.ECS_CLUSTER_NAME }}
+#          wait-for-service-stability: true
+#

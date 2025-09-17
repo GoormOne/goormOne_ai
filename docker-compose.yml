@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+
+  model-service:
+    build:
+      context: .
+      dockerfile: model-service/Dockerfile
+    container_name: model-service
+    ports:
+      - "50051:50051"
+    env_file:
+      - .env.dev
+    depends_on:
+      - mongo
+
+  msa-ai-service:
+    build:
+      context: .
+      dockerfile: msa-ai-service/Dockerfile
+    container_name: msa-ai-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.dev
+    depends_on:
+      - redis
+      - mongo
+      - model-service
+
+volumes:
+  mongo_data:
