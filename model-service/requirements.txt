@@ -1,0 +1,8 @@
+grpcio 
+grpcio-tools
+pymongo
+python-dotenv
+sentence-transformers
+openai
+torch
+transformers

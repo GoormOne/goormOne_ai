@@ -7,4 +7,9 @@ pydantic==2.7.1
 openai
 certifi
 dnspython
-numpy   
+numpy
+sentence-transformers
+torch
+redis
+grpcio 
+grpcio-tools
