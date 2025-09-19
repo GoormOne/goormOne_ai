@@ -53,23 +53,55 @@ goormOne_msa/
 ├── msa-ai-service/            # FastAPI 기반 AI 서비스
 │   ├── app/
 │   │   ├── core/              # 환경설정
+│   │   │   ├── config.py      # 환경설정
 │   │   ├── db/                # MongoDB 연결
+│   │   │   ├── local_init_dummy.js
+│   │   │   ├── mongodb.py
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── qa.py
+│   │   │   ├── review.py
 │   │   ├── routes/            # API 라우터
+│   │   │   ├── health.py
+│   │   │   ├── qa_router.py
+│   │   │   ├── seed_router.py
 │   │   ├── services/          # Redis Consumer, RAG, Embedding 서비스
+│   │   │   ├── embedding_service.py
+│   │   │   ├── rag_service.py
+│   │   │   ├── redis_service.py
+│   │   │   ├── review_watcher.py
+│   │   ├── utils/          # Redis Consumer, RAG, Embedding 서비스
+│   │   │   ├── helpers.py
+│   │   └── __init__.py            # FastAPI 엔트리포인트
+│   │   └── model_pb2.py            # FastAPI 엔트리포인트
+│   │   └── model_pb2_grpc.py            # FastAPI 엔트리포인트
 │   │   └── main.py            # FastAPI 엔트리포인트
+│   │   └── test_mongo.py            # FastAPI 엔트리포인트
 │   ├── Dockerfile
+│   ├── log_config.yaml
 │   └── requirements.txt
+│   └── task-definition.json
 │
 ├── model-service/             # gRPC 기반 모델 서빙 서비스
 │   ├── app/
+│   │   ├── core/
+│   │   ├── db/
+│   │   │   ├── __init__.py
+│   │   │   ├── mongodb.py
+│   │   ├── ml/
+│   │   │   ├── embedding_model.py
+│   │   ├── services/
+│   │   │   ├── labeling_service.py
+│   │   └── __init__.py
 │   │   └── main.py
+│   │   └── model_pb2.py            # FastAPI 엔트리포인트
+│   │   └── model_pb2_grpc.py            # FastAPI 엔트리포인트
 │   ├── Dockerfile
 │   └── requirements.txt
 │
 ├── proto/                     # gRPC 프로토콜 정의
 │   └── model.proto
-│
+├── README.md
 ├── docker-compose.yml         # 로컬 개발 환경 (Redis, MongoDB, AI 서비스, Model Service)
-└── .env.dev                   # 개발용 환경 변수
 
 ```
