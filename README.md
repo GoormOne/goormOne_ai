@@ -50,58 +50,58 @@
 
 ```
 goormOne_msa/
-├── msa-ai-service/            # FastAPI 기반 AI 서비스
+├── msa-ai-service/                     # FastAPI 기반 AI 서비스 (Redis/MongoDB와 연동, gRPC Client 역할)
 │   ├── app/
-│   │   ├── core/              # 환경설정
-│   │   │   ├── config.py      # 환경설정
-│   │   ├── db/                # MongoDB 연결
-│   │   │   ├── local_init_dummy.js
-│   │   │   ├── mongodb.py
-│   │   ├── models/
+│   │   ├── core/                       # 핵심 설정 관리
+│   │   │   ├── config.py               # 환경변수, 설정값 로드
+│   │   ├── db/                         # MongoDB 관련 코드
+│   │   │   ├── local_init_dummy.js     # 로컬 개발용 초기 데이터 스크립트
+│   │   │   ├── mongodb.py              # MongoDB 연결 및 헬퍼 함수
+│   │   ├── models/                     # 데이터 모델 정의 (Pydantic/도메인 모델)
 │   │   │   ├── __init__.py
-│   │   │   ├── qa.py
-│   │   │   ├── review.py
-│   │   ├── routes/            # API 라우터
-│   │   │   ├── health.py
-│   │   │   ├── qa_router.py
-│   │   │   ├── seed_router.py
-│   │   ├── services/          # Redis Consumer, RAG, Embedding 서비스
-│   │   │   ├── embedding_service.py
-│   │   │   ├── rag_service.py
-│   │   │   ├── redis_service.py
-│   │   │   ├── review_watcher.py
-│   │   ├── utils/          # Redis Consumer, RAG, Embedding 서비스
-│   │   │   ├── helpers.py
-│   │   └── __init__.py            # FastAPI 엔트리포인트
-│   │   └── model_pb2.py            # FastAPI 엔트리포인트
-│   │   └── model_pb2_grpc.py            # FastAPI 엔트리포인트
-│   │   └── main.py            # FastAPI 엔트리포인트
-│   │   └── test_mongo.py            # FastAPI 엔트리포인트
-│   ├── Dockerfile
-│   ├── log_config.yaml
-│   └── requirements.txt
-│   └── task-definition.json
+│   │   │   ├── qa.py                   # QA 관련 모델 (질문/답변 구조)
+│   │   │   ├── review.py               # 리뷰 데이터 모델
+│   │   ├── routes/                     # API 라우터 (엔드포인트 정의)
+│   │   │   ├── health.py               # 헬스체크 라우터
+│   │   │   ├── qa_router.py            # QA 관련 API 라우터
+│   │   │   ├── seed_router.py          # 개발용 더미 데이터 삽입 API
+│   │   ├── services/                   # 서비스 로직 계층
+│   │   │   ├── embedding_service.py    # gRPC 통해 임베딩 요청/저장
+│   │   │   ├── rag_service.py          # RAG 실행 (검색 + 응답 생성)
+│   │   │   ├── redis_service.py        # Redis Consumer/Producer (Stream 처리)
+│   │   │   ├── review_watcher.py       # MongoDB Change Stream Watcher
+│   │   ├── utils/                      # 유틸리티 모듈
+│   │   │   ├── helpers.py              # 공통 유틸 함수
+│   │   ├── __init__.py
+│   │   ├── model_pb2.py                # gRPC 자동 생성 코드 (proto 기반)
+│   │   ├── model_pb2_grpc.py           # gRPC 자동 생성 코드 (proto 기반)
+│   │   ├── main.py                     # FastAPI 엔트리포인트
+│   │   ├── test_mongo.py               # MongoDB 연결/테스트 스크립트
+│   ├── Dockerfile                      # msa-ai-service용 Dockerfile
+│   ├── log_config.yaml                 # 로깅 설정 파일
+│   ├── requirements.txt                # Python 의존성 정의
+│   └── task-definition.json            # AWS ECS 배포 정의 (Task Definition)
 │
-├── model-service/             # gRPC 기반 모델 서빙 서비스
+├── model-service/                      # gRPC 기반 모델 서빙 서비스 (AI 임베딩/라벨링 처리)
 │   ├── app/
-│   │   ├── core/
-│   │   ├── db/
+│   │   ├── core/                       # 공통 설정 관리
+│   │   ├── db/                         # MongoDB 관련 코드
 │   │   │   ├── __init__.py
-│   │   │   ├── mongodb.py
-│   │   ├── ml/
-│   │   │   ├── embedding_model.py
-│   │   ├── services/
-│   │   │   ├── labeling_service.py
-│   │   └── __init__.py
-│   │   └── main.py
-│   │   └── model_pb2.py            # FastAPI 엔트리포인트
-│   │   └── model_pb2_grpc.py            # FastAPI 엔트리포인트
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   │   ├── mongodb.py              # MongoDB 연결 및 헬퍼 함수
+│   │   ├── ml/                         # 머신러닝/임베딩 관련 모듈
+│   │   │   ├── embedding_model.py      # SentenceTransformers 모델 로딩 및 추론
+│   │   ├── services/                   # 서비스 로직 계층
+│   │   │   ├── labeling_service.py     # 라벨링 로직 (긍정/부정 분류 등)
+│   │   ├── __init__.py
+│   │   ├── main.py                     # gRPC 서버 엔트리포인트
+│   │   ├── model_pb2.py                # gRPC 자동 생성 코드 (proto 기반)
+│   │   ├── model_pb2_grpc.py           # gRPC 자동 생성 코드 (proto 기반)
+│   ├── Dockerfile                      # model-service용 Dockerfile
+│   └── requirements.txt                # Python 의존성 정의
 │
-├── proto/                     # gRPC 프로토콜 정의
-│   └── model.proto
-├── README.md
-└── docker-compose.yml         # 로컬 개발 환경 (Redis, MongoDB, AI 서비스, Model Service)
-
+├── proto/                              # gRPC 프로토콜 정의 디렉토리
+│   └── model.proto                     # gRPC 서비스 및 메시지 정의
+│
+├── README.md                           # 프로젝트 개요/문서
+└── docker-compose.yml                  # 로컬 개발 환경 (Redis, MongoDB, AI 서비스, Model Service)
 ```
