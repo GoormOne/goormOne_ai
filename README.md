@@ -47,6 +47,8 @@
 
 ---
 
+
+```
 goormOne_msa/
 ├── msa-ai-service/            # FastAPI 기반 AI 서비스
 │   ├── app/
@@ -70,3 +72,4 @@ goormOne_msa/
 ├── docker-compose.yml         # 로컬 개발 환경 (Redis, MongoDB, AI 서비스, Model Service)
 └── .env.dev                   # 개발용 환경 변수
 
+```
