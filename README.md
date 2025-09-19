@@ -1,12 +1,13 @@
 # 🍀 MSA 기반 AI 서비스 아키텍처 프로젝트
 
 ## 📌 Goal
-본 프로젝트는 **MSA(Microservices Architecture)** 기반으로 **AI 서비스와 비즈니스 서비스 간의 연동**을 구현하여, 확장성과 안정성을 강화하는 것을 목표로 합니다.  
+본 프로젝트는 **MSA(Microservices Architecture)** 기반으로 **AI 서비스와 비즈니스 서비스(Spring)** 간의 연동을 구현하여, 확장성과 안정성을 강화하는 것을 목표로 합니다.  
 주요 목표는 다음과 같습니다:
 1. **이벤트 기반 아키텍처** → Redis Stream을 활용한 비동기 메시징으로 서비스 간 느슨한 결합  
-2. **AI 모델 서빙** → gRPC 기반 Python AI 서비스와 Spring 서비스 연계  
-3. **실시간 데이터 처리** → MongoDB Change Stream 기반 리뷰 적재 및 임베딩 자동화  
-4. **Kubernetes 오케스트레이션** → 자동 확장, 무중단 배포, 고가용성 확보  
+2. **AI 모델 서빙 분리** → gRPC 기반 Python Model Service와 FastAPI AI 서비스 분리  
+3. **리뷰 데이터 처리 자동화** → Spring Batch 기반으로 리뷰 적재 및 사전 전처리  
+4. **효율적 확장성과 비용 절감** → OpenAI API 직접 호출 대신 KoSimCSE 임베딩 모델 도입  
+5. **확장성 고려 설계** → 대량 임베딩 처리 및 모델 교체 상황을 대비한 아키텍처  
 
 ---
 
@@ -15,35 +16,37 @@
 
 - 서비스 간 **직접 REST API 호출** → 독립적 확장 어려움, 장애 전파 위험  
 - **동기 처리 구조** → 요청 급증 시 응답 지연 및 리소스 낭비  
-- **AI 모델 호출** → 대량 요청 처리 시 성능 병목 발생  
-- **분산 환경** → 데이터 흐름 추적 및 오류 분석이 어려움  
+- **AI 모델 호출** → 대량 요청 처리 시 성능 병목 및 OpenAI API 비용 증가  
+- **애플리케이션 내부 유사도 계산** → 데이터가 늘어날수록 속도 저하, 메모리 한계 발생  
 
 ---
 
 ## 🏗️ Architecture
 - **Redis Stream**: Spring → AI 서비스 간 이벤트 브로커 역할  
-- **MongoDB Change Stream**: 리뷰 저장 시 자동 임베딩 생성 및 저장  
+- **Spring Batch**: 리뷰 데이터 적재 및 사전 처리  
 - **gRPC 통신**: FastAPI 기반 AI 서비스 ↔ Model Service (Python) 간 고성능 RPC  
-- **Kubernetes**: 서비스 오케스트레이션 및 자동 확장  
-- **CI/CD 파이프라인**: GitHub Actions (CI) + ArgoCD (CD), Canary 배포 적용  
+- **Model Service (Python)**: 한국어 임베딩 특화 모델 KoSimCSE 사용, 임베딩/라벨링 전담  
+- **MongoDB Atlas Vector Search**: Lucene 기반 HNSW 인덱스로 대규모 데이터에서도 빠른 벡터 검색  
+- **FastAPI**: AI 서비스 엔트리포인트, Redis 구독/DB 저장/RAG 수행  
 
 ---
 
 ## ⚙️ Tech Stack
-- **Backend**: Spring Boot (Java), Redis, MongoDB  
-- **AI Service**: FastAPI (Python), gRPC, SentenceTransformers  
-- **Infra**: AWS EKS, ECR, Atlas MongoDB, Redis, Kubernetes, Helm  
+- **Backend**: Spring Boot (Java), Spring Batch, Redis, MongoDB Atlas  
+- **AI Service**: FastAPI (Python), gRPC, KoSimCSE (SentenceTransformers 기반), OpenAI API (일부 RAG 응답 생성)  
+- **Infra**: Docker, Docker Compose, AWS (ECR/EKS), Kubernetes, Helm  
 - **CI/CD**: GitHub Actions, ArgoCD  
 - **Monitoring**: Prometheus, Grafana, Loki  
 
 ---
 
 ## ✅ Key Features
-- **비동기 메시징**: Redis Stream을 통한 Spring ↔ AI 서비스 간 통신  
-- **자동 임베딩 파이프라인**: MongoDB Change Stream → gRPC Model Service 호출  
-- **RAG 기반 응답 생성**: 리뷰 데이터를 활용한 검색 + 생성형 AI 응답  
-- **자동 확장 & 무중단 배포** (Kubernetes HPA + Canary Deployment)  
-- **관측 가능성 확보** (로그·메트릭·트레이싱 통합)  
+- **비동기 메시징**: Redis Stream으로 Spring ↔ AI 서비스 간 통신  
+- **서버 분리 & gRPC**: 임베딩 전담 Model Service와 AI 서비스 분리 → 성능 최적화, 확장성 확보  
+- **임베딩 비용 절감**: OpenAI API 대신 KoSimCSE 활용 → 한국어 특화 성능 + 비용 감소  
+- **Vector Search 도입**: MongoDB Atlas HNSW 기반 인덱스를 활용해 대규모 리뷰 데이터에서도 빠른 검색  
+- **RAG 기반 응답 생성**: 질문 임베딩 + 리뷰 임베딩 비교 후 LLM 프롬프팅을 통한 응답 생성  
+- **확장성 고려**: Model Service만 따로 스케일 아웃 가능, 데이터가 늘어도 성능 유지  
 
 ---
 
