@@ -102,6 +102,6 @@ goormOne_msa/
 ├── proto/                     # gRPC 프로토콜 정의
 │   └── model.proto
 ├── README.md
-├── docker-compose.yml         # 로컬 개발 환경 (Redis, MongoDB, AI 서비스, Model Service)
+└── docker-compose.yml         # 로컬 개발 환경 (Redis, MongoDB, AI 서비스, Model Service)
 
 ```
