@@ -50,7 +50,7 @@
 
 ---
 
-
+## 📂 Project Structure
 ```
 goormOne_msa/
 ├── msa-ai-service/                     # FastAPI 기반 AI 서비스 (Redis/MongoDB와 연동, gRPC Client 역할)
