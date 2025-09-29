@@ -82,18 +82,18 @@
  
 
  ### AI
-- **Redis Stream** 
-	Store 서비스 → AI 서비스 간 이벤트 브로커 역할  
+- **Redis Stream**
+  Store 서비스 → AI 서비스 간 이벤트 브로커 역할  
 - **Spring Batch** 
-	리뷰 데이터 적재 및 사전 처리  
+  리뷰 데이터 적재 및 사전 처리  
 - **gRPC 통신** 
-	FastAPI 기반 AI 서비스 ↔ Model Service (Python) 간 고성능 RPC  
+  FastAPI 기반 AI 서비스 ↔ Model Service (Python) 간 고성능 RPC  
 - **Model Service (Python)** 
-	한국어 임베딩 특화 모델 KoSimCSE 사용, 임베딩/라벨링 추출  
+  한국어 임베딩 특화 모델 KoSimCSE 사용, 임베딩/라벨링 추출  
 - **MongoDB Atlas Vector Search** 
-	Lucene 기반 HNSW 인덱스로 대규모 데이터에서도 빠른 벡터 검색  
+  Lucene 기반 HNSW 인덱스로 대규모 데이터에서도 빠른 벡터 검색  
 - **FastAPI** 
-	AI 서비스 엔트리포인트, Redis 구독/DB 저장/RAG 수행  
+  AI 서비스 엔트리포인트, Redis 구독/DB 저장/RAG 수행  
   
 ---
 ## 📈 Observability Architecture
