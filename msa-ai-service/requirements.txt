@@ -10,3 +10,6 @@ dnspython
 numpy
 sentence-transformers
 torch
+redis
+grpcio 
+grpcio-tools

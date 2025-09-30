@@ -1,21 +1,35 @@
 # Pydantic 스키마 (reviews, reviews_embedding)
 
-from pydantic import BaseModel
-from datetime import datetime
+from pydantic import BaseModel, Field
 from typing import List
+from datetime import datetime
 
-class Review(BaseModel):
+
+class ReviewItem(BaseModel):
     review_id: str
     text: str
     created_at: datetime
 
-class Menu(BaseModel):
+
+class MenuReviews(BaseModel):
     menu_id: str
     menu_name: str
-    reviews: List[Review] = []
+    reviews: List[ReviewItem] = []
 
-class StoreReview(BaseModel):
-    _id: str
+
+class ReviewDocument(BaseModel):
+    id: str = Field(..., alias="_id")   # store_id
     store_name: str
-    menus: List[Menu]
+    menus: List[MenuReviews] = []
+    updated_at: datetime
+
+
+class ReviewEmbeddingDocument(BaseModel):
+    id: str = Field(..., alias="_id")   # review_id
+    store_id: str
+    menu_id: str
+    review: str
+    label: str
+    polarity: str
+    embedding: List[float]
     updated_at: datetime
